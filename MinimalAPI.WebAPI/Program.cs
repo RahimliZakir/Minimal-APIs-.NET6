@@ -18,7 +18,6 @@ services.AddSwaggerGen();
 IWebHostEnvironment env = builder.Environment;
 WebApplication app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
 // GetAll
 app.MapGet("/gettodos", async (TodoDbContext db) => await db.Todos.ToListAsync());
 // GetById
@@ -28,16 +27,15 @@ await db.Todos.FirstOrDefaultAsync(t => t.Id == id) is Todo todo ? Results.Ok(to
 // Post
 app.MapPost("/posttodo", async (TodoDbContext db, Todo todo) =>
 {
-
     await db.Todos.AddAsync(todo);
     await db.SaveChangesAsync();
 
     return Results.Created($"/gettodo/{todo.Id}", todo);
 });
 // Put
-app.MapPut("/posttodo", async (TodoDbContext db, Todo todo, int id) =>
+app.MapPut("/puttodo/{id}", async (TodoDbContext db, Todo todo, int id) =>
 {
-    Todo? entity = await db.Todos.FindAsync(id);
+    Todo? entity = await db.Todos.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
 
     if (entity is null)
     {
@@ -57,6 +55,7 @@ app.MapDelete("/deletetodo/{id}", async (int id, TodoDbContext db) =>
     {
         db.Todos.Remove(todo);
         await db.SaveChangesAsync();
+
         return Results.Ok(todo);
     }
 
